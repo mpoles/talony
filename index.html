@@ -8,15 +8,14 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Jura:wght@300;400;700&family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
 <style>
-/* ... (весь CSS, как в прошлой версии) ... */
 :root {
     --color-bg: #0d0f1a;
     --color-panel-bg: #141829;
     --color-border: #2a3150;
     --color-text: #d0d8ff;
     --color-text-label: #8a99c2;
-    --color-primary: #4a90e2; /* Deep Blue */
-    --color-secondary: #50e3c2; /* Teal */
+    --color-primary: #4a90e2;
+    --color-secondary: #50e3c2;
     --color-error: #e24a4a; 
     --font-primary: 'Jura', sans-serif;
     --font-secondary: 'Orbitron', sans-serif;
@@ -232,10 +231,10 @@ button:disabled .loader { display: block; }
                     <h2>ПОЛУЧИТЬ ТАЛОН</h2>
                 </header>
                 <form id="talon-form">
-                    <p>Введите ваше имя для регистрации в очереди на сдачу экзамена.</p>
+                    <p>Введите ваше имя для регистрации в очереди.</p>
                     <div class="input-group">
                         <label for="name-input">ВАШЕ ИМЯ:</label>
-                        <input type="text" id="name-input" required autocomplete="off" placeholder="Например, Михаил...">
+                        <input type="text" id="name-input" required autocomplete="off" placeholder="Имя...">
                     </div>
                     <button type="submit" id="submit-button">
                         <span class="button-text">ВЗЯТЬ ТАЛОН</span>
@@ -589,3 +588,4 @@ button:disabled .loader { display: block; }
     </script>
 </body>
 </html>
+
