@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Электронная очередь</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Jura:wght@300;400;700&family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+    --color-bg: #0d0f1a;
+    --color-panel-bg: #141829;
+    --color-border: #2a3150;
+    --color-text: #d0d8ff;
+    --color-text-label: #8a99c2;
+    /* Новая, более спокойная палитра */
+    --color-primary: #4a90e2; /* Deep Blue */
+    --color-secondary: #50e3c2; /* Teal */
+    --color-error: #e24a4a;
+    
+    --font-primary: 'Jura', sans-serif;
+    --font-secondary: 'Orbitron', sans-serif;
+    
+    /* Приглушенное свечение */
+    --shadow-glow-primary: 0 0 8px rgba(74, 144, 226, 0.6);
+    --shadow-glow-secondary: 0 0 8px rgba(80, 227, 194, 0.6);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html, body {
+    width: 100%;
+    min-height: 100vh;
+    font-family: var(--font-primary);
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    font-size: 16px;
+    font-weight: 400;
+    overflow-x: hidden;
+    background: repeating-linear-gradient(
+        var(--color-bg) 0px,
+        var(--color-bg) 2px,
+        #0f1220 2px,
+        #0f1220 3px
+    );
+}
+
+h2 {
+    font-family: var(--font-secondary);
+    font-weight: 700;
+    font-size: 1.5rem;
+    color: var(--color-primary);
+    text-shadow: 0 0 10px rgba(74, 144, 226, 0.4); /* Меньше тени */
+    text-transform: uppercase;
+}
+
+.container {
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+    max-width: 1400px;
+    margin: 2rem auto;
+    padding: 1rem;
+    gap: 2rem;
+}
+
+.queue-panel {
+    flex: 1;
+    min-width: 300px;
+}
+
+.form-panel {
+    flex: 1;
+    min-width: 300px;
+    max-width: 500px;
+}
+
+.queue-panel,
+.form-panel > div {
+    background-color: var(--color-panel-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+    display: flex;
+    flex-direction: column;
+}
+
+.panel-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--color-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.queue-list-container {
+    padding: 1rem 0;
+    flex-grow: 1;
+    position: relative;
+    min-height: 400px;
+    overflow-y: auto;
+}
+
+#queue-list {
+    list-style: none;
+}
+
+#queue-list li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* <-- Добавлено */
+    gap: 1rem; /* <-- Добавлено */
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--color-border);
+    font-size: 1.1rem;
+    font-weight: 300;
+    animation: fadeIn 0.5s ease-out;
+}
+
+#queue-list li:last-child {
+    border-bottom: none;
+}
+
+#queue-list li .queue-number {
+    font-family: var(--font-secondary);
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--color-primary);
+    min-width: 50px;
+    text-shadow: 0 0 5px rgba(74, 144, 226, 0.5);
+}
+
+#queue-list li .queue-name {
+    word-break: break-all;
+    flex-grow: 1; /* <-- Добавлено */
+}
+
+/* <-- Новый стиль для времени --> */
+#queue-list li .queue-time {
+    font-size: 0.9rem;
+    color: var(--color-text-label);
+    font-family: monospace;
+    white-space: nowrap;
+}
+
+.empty-message {
+    text-align: center;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: var(--color-text-label);
+}
+.empty-message span {
+    font-size: 2rem;
+    font-family: monospace;
+}
+.empty-message.hidden {
+    display: none;
+}
+
+
+#form-container {
+    padding-bottom: 1.5rem;
+}
+
+#talon-form {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+#talon-form p {
+    font-size: 0.9rem;
+    color: var(--color-text-label);
+    line-height: 1.5;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.input-group label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--color-text-label);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+input[type="text"] {
+    background-color: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    padding: 0.75rem 1rem;
+    font-family: var(--font-primary);
+    font-size: 1.1rem;
+    color: var(--color-text);
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+input[type="text"]:focus {
+    border-color: var(--color-primary);
+    box-shadow: var(--shadow-glow-primary);
+}
+
+button {
+    font-family: var(--font-secondary);
+    font-size: 1rem;
+    font-weight: 700;
+    color: #fff; /* Белый текст на синем */
+    background-color: var(--color-primary);
+    border: none;
+    border-radius: 4px;
+    padding: 0.8rem 1.5rem;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 10px rgba(74, 144, 226, 0.5);
+    position: relative;
+    overflow: hidden;
+}
+
+/* <-- Убрано "вырвиглазное" белое свечение --> */
+button:hover:not(:disabled) {
+    background-color: #5aa1f2; /* Просто чуть светлее */
+    box-shadow: 0 0 15px rgba(74, 144, 226, 0.8);
+}
+
+button:disabled {
+    background-color: var(--color-text-label);
+    box-shadow: none;
+    cursor: not-allowed;
+}
+
+button .button-text {
+    transition: opacity 0.2s ease;
+}
+button:disabled .button-text {
+    opacity: 0;
+}
+
+.error-message {
+    color: var(--color-error);
+    text-shadow: 0 0 5px var(--color-error);
+    font-size: 0.9rem;
+    text-align: center;
+    display: none; 
+}
+
+.hidden {
+    display: none !important;
+}
+
+#talon-container {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    animation: fadeIn 0.5s ease;
+}
+
+.talon {
+    border: 1px solid var(--color-primary);
+    border-radius: 8px;
+    background: linear-gradient(145deg, var(--color-panel-bg), #1a203d);
+    box-shadow: var(--shadow-glow-primary);
+    overflow: hidden;
+    position: relative; 
+}
+
+.talon::before {
+    content: '';
+    position: absolute;
+    top: -1px;
+    right: -1px;
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, transparent 50%, var(--color-secondary) 50%);
+    box-shadow: var(--shadow-glow-secondary);
+}
+
+.talon-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem 1.5rem;
+    background-color: rgba(42, 49, 80, 0.5);
+    border-bottom: 1px dashed var(--color-primary);
+}
+
+.talon-chip {
+    width: 24px;
+    height: 18px;
+    background-color: var(--color-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: 3px;
+}
+
+.talon-title {
+    font-family: var(--font-secondary);
+    color: var(--color-secondary);
+    text-shadow: var(--shadow-glow-secondary);
+    font-size: 1.2rem;
+}
+
+.talon-body {
+    padding: 2rem 1.5rem;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.5rem 1rem;
+    align-items: center;
+}
+
+.talon-label {
+    font-size: 0.9rem;
+    color: var(--color-text-label);
+    text-transform: uppercase;
+}
+
+#talon-name {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--color-text);
+}
+
+#talon-number {
+    grid-column: 1 / -1; 
+    text-align: center;
+}
+
+.talon-number-large {
+    font-family: var(--font-secondary);
+    font-size: 4rem;
+    font-weight: 700;
+    color: var(--color-primary);
+    /* <-- Приглушенная тень --> */
+    text-shadow: 0 0 12px rgba(74, 144, 226, 0.7);
+    padding: 1rem 0;
+}
+
+.talon-footer {
+    padding: 0.5rem 1.5rem;
+    font-family: monospace;
+    font-size: 0.75rem;
+    color: var(--color-text-label);
+    background-color: rgba(13, 15, 26, 0.5);
+    text-align: center;
+}
+
+.button-secondary {
+    background: transparent;
+    border: 1px solid var(--color-text-label);
+    color: var(--color-text-label);
+    box-shadow: none;
+}
+.button-secondary:hover:not(:disabled) {
+    background: var(--color-text-label);
+    color: var(--color-bg);
+    box-shadow: 0 0 10px var(--color-text-label);
+}
+
+.loader-container {
+    width: 24px;
+    height: 24px;
+    display: none; 
+}
+.loader-container.active {
+    display: block;
+}
+
+#submit-button .loader {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: none; 
+}
+button:disabled .loader {
+    display: block; 
+}
+
+.loader {
+    width: 20px;
+    height: 20px;
+    border: 3px solid var(--color-border);
+    border-top-color: var(--color-primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+#submit-button .loader {
+    border-top-color: var(--color-bg);
+    width: 24px;
+    height: 24px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+</style>
+</head>
+<body>
+
+    <main class="container">
+
+        <section class="queue-panel">
+            <header class="panel-header">
+                <h2>ТЕКУЩАЯ ОЧЕРЕДЬ</h2>
+                <div class="loader-container" id="queue-loader">
+                    <div class="loader"></div>
+                </div>
+            </header>
+            <div class="queue-list-container">
+                <ul id="queue-list">
+                    </ul>
+                <div id="empty-queue-message" class="empty-message">
+                    <span>(¬_¬)</span>
+                    <p>Очередь пуста.<br>Будь первым.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="form-panel">
+            <div id="form-container">
+                <header class="panel-header">
+                    <h2>ПОЛУЧИТЬ ТАЛОН</h2>
+                </header>
+                <form id="talon-form">
+                    <p>Введите ваше имя для регистрации в очереди.</p>
+                    <div class="input-group">
+                        <label for="name-input">ВАШЕ ИМЯ:</label>
+                        <input type="text" id="name-input" required autocomplete="off" placeholder="Имя">
+                    </div>
+                    <button type="submit" id="submit-button">
+                        <span class="button-text">ВЗЯТЬ ТАЛОН</span>
+                        <div class="loader" id="submit-loader"></div>
+                    </button>
+                    <div id="form-error" class="error-message"></div>
+                </form>
+            </div>
+            
+            <div id="talon-container" class="hidden">
+                <div class="talon">
+                    <div class="talon-header">
+                        <span class="talon-chip"></span>
+                        <span class="talon-title">ТАЛОН</span>
+                    </div>
+                    <div class="talon-body">
+                        <span class="talon-label">Имя:</span>
+                        <span id="talon-name"></span>
+                        <span class="talon-label">Номер в очереди:</span>
+                        <span id="talon-number" class="talon-number-large"></span>
+                    </div>
+                    <div class="talon-footer">
+                        :: digital_queue_system :: v1.0 ::
+                    </div>
+                </div>
+                <button id="reset-button" class="button-secondary">Взять еще один</button>
+            </div>
+
+        </section>
+
+    </main>
+
+<script>
+(function() {
+    'use strict';
+
+    const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyH1sNxzT7mx023jOmNd1cbsK4klpbCwR80B-uyZ8T3ulO6HYUikgFO3Qfe-1It5BA2/exec';
+
+    const dom = {};
+
+    const UI = {
+        renderQueue: (queueData) => {
+            dom.queueList.innerHTML = ''; 
+            
+            if (queueData.length === 0) {
+                dom.emptyMessage.classList.remove('hidden');
+                return;
+            }
+            
+            dom.emptyMessage.classList.add('hidden');
+            
+            const fragment = document.createDocumentFragment();
+            queueData.forEach((item, index) => {
+                const li = document.createElement('li');
+                
+                const numberSpan = document.createElement('span');
+                numberSpan.className = 'queue-number';
+                numberSpan.textContent = `#${index + 1}`;
+                
+                const nameSpan = document.createElement('span');
+                nameSpan.className = 'queue-name';
+                nameSpan.textContent = item.name;
+                
+                const timeSpan = document.createElement('span');
+                timeSpan.className = 'queue-time';
+                // Форматируем время из строки ISO (или объекта Date)
+                const date = new Date(item.timestamp);
+                timeSpan.textContent = date.toLocaleTimeString('ru-RU', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                
+                li.appendChild(numberSpan);
+                li.appendChild(nameSpan);
+                li.appendChild(timeSpan);
+                fragment.appendChild(li);
+            });
+            dom.queueList.appendChild(fragment);
+        },
+
+        showQueueLoading: (isLoading) => {
+            dom.queueLoader.classList.toggle('active', isLoading);
+        },
+
+        setFormLoading: (isLoading) => {
+            dom.submitButton.disabled = isLoading;
+            dom.nameInput.disabled = isLoading;
+            dom.buttonText.textContent = isLoading ? 'РЕГИСТРАЦИЯ...' : 'ВЗЯТЬ ТАЛОН';
+        },
+
+        showFormError: (message) => {
+            dom.formError.textContent = message;
+            dom.formError.style.display = message ? 'block' : 'none';
+        },
+
+        showTalon: (name, number) => {
+            dom.talonName.textContent = name;
+            dom.talonNumber.textContent = `#${number}`;
+            
+            dom.formContainer.classList.add('hidden');
+            dom.talonContainer.classList.remove('hidden');
+        },
+
+        resetForm: () => {
+            dom.formContainer.classList.remove('hidden');
+            dom.talonContainer.classList.add('hidden');
+            dom.nameInput.value = '';
+            UI.showFormError(null);
+        }
+    };
+
+    const API = {
+        fetchQueue: async () => {
+            UI.showQueueLoading(true);
+            try {
+                const response = await fetch(GAS_WEB_APP_URL);
+                if (!response.ok) {
+                    throw new Error(`Network error: ${response.statusText}`);
+                }
+                const data = await response.json();
+                UI.renderQueue(data);
+            } catch (error) {
+                console.error('Ошибка при загрузке очереди:', error);
+            } finally {
+                UI.showQueueLoading(false);
+            }
+        },
+
+        addTalon: async (name) => {
+            UI.setFormLoading(true);
+            UI.showFormError(null);
+            try {
+                const response = await fetch(GAS_WEB_APP_URL, {
+                    method: 'POST',
+                    mode: 'cors',
+                    redirect: 'follow',
+                    headers: {
+                        'Content-Type': 'text/plain;charset=utf-8',
+                    },
+                    body: JSON.stringify({ name: name })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    UI.showTalon(result.name, result.number);
+                    API.fetchQueue(); 
+                } else {
+                    throw new Error(result.error || 'Неизвестная ошибка сервера.');
+                }
+
+            } catch (error) {
+                console.error('Ошибка при добавлении талона:', error);
+                UI.showFormError(`Ошибка: ${error.message}`);
+            } finally {
+                UI.setFormLoading(false);
+            }
+        }
+    };
+
+    const Handlers = {
+        handleFormSubmit: (event) => {
+            event.preventDefault();
+            const name = dom.nameInput.value.trim();
+            
+            if (name.length < 2) {
+                UI.showFormError('Имя должно содержать хотя бы 2 символа.');
+                return;
+            }
+            if (name.length > 50) {
+                UI.showFormError('Имя слишком длинное (макс. 50 символов).');
+                return;
+            }
+            
+            API.addTalon(name);
+        },
+
+        handleResetClick: () => {
+            UI.resetForm();
+        }
+    };
+    
+    function cacheDomElements() {
+        dom.queueList = document.getElementById('queue-list');
+        dom.queueLoader = document.getElementById('queue-loader');
+        dom.emptyMessage = document.getElementById('empty-queue-message');
+        
+        dom.formPanel = document.getElementById('form-panel');
+        dom.formContainer = document.getElementById('form-container');
+        dom.talonForm = document.getElementById('talon-form');
+        dom.nameInput = document.getElementById('name-input');
+        dom.submitButton = document.getElementById('submit-button');
+        dom.buttonText = document.querySelector('#submit-button .button-text');
+        dom.formError = document.getElementById('form-error');
+        
+        dom.talonContainer = document.getElementById('talon-container');
+        dom.talonName = document.getElementById('talon-name');
+        dom.talonNumber = document.getElementById('talon-number');
+        dom.resetButton = document.getElementById('reset-button');
+    }
+
+    function init() {
+        console.log('Queue App Initialized.');
+        
+        cacheDomElements(); 
+
+        if (dom.talonForm) {
+            dom.talonForm.addEventListener('submit', Handlers.handleFormSubmit);
+        } else {
+            console.error('CRITICAL: #talon-form not found!');
+        }
+        
+        if (dom.resetButton) {
+            dom.resetButton.addEventListener('click', Handlers.handleResetClick);
+        } else {
+            console.error('CRITICAL: #reset-button not found!');
+        }
+
+        API.fetchQueue();
+
+        setInterval(API.fetchQueue, 5000);}
+
+    document.addEventListener('DOMContentLoaded', init);
+
+})();
+</script>
+</body>
+</html>
